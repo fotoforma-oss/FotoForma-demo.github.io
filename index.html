@@ -3,26 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Fotoforma Demo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap">
 <style>
 /* Plan: dos colores de marca (ámbar y azul petróleo) sobre blanco. Sora para títulos y marca, Inter para texto.
-   Composición: encabezado compacto, un taller de dos columnas (foto + visor 3D) y debajo el anuncio. */
+   Tema único claro (blanco neutro). Composición: encabezado compacto, un taller de dos columnas (foto + visor 3D) y debajo el anuncio. */
 :root{
   --bg:#FFFFFF; --surface:#F1F5F5; --ink:#0B2F3A; --muted:#4A646C; --line:#D3DEE0;
-  --amber:#FFB000; --on-amber:#0B2F3A; --stage:#0B2F3A; --stage-hi:#14505F; --focus:#0B2F3A;
+  --amber:#FFB000; --on-amber:#0B2F3A; --stage:#F3F4F4; --stage-hi:#FFFFFF; --wire:#0B2F3A; --overlay:rgba(255,255,255,.93); --focus:#0B2F3A;
   --font-display:'Sora','Inter',system-ui,sans-serif; --font-body:'Inter',system-ui,sans-serif;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#06191F; --surface:#0C2830; --ink:#EAF3F5; --muted:#9FB8BF; --line:#1C4350;
-    --stage:#0B2F3A; --stage-hi:#17586A; --focus:#FFB000; color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#06191F; --surface:#0C2830; --ink:#EAF3F5; --muted:#9FB8BF; --line:#1C4350;
-  --stage:#0B2F3A; --stage-hi:#17586A; --focus:#FFB000; color-scheme:dark;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -65,25 +56,25 @@ h2 .n{display:inline-grid;place-items:center;width:26px;height:26px;border-radiu
 .current strong{display:block;color:var(--ink);font-size:14px}
 
 /* Visor */
-.stage{position:relative;width:100%;aspect-ratio:5/4;border-radius:16px;overflow:hidden;
+.stage{position:relative;width:100%;aspect-ratio:5/4;border-radius:16px;overflow:hidden;border:1px solid var(--line);
   background:radial-gradient(120% 100% at 50% 28%,var(--stage-hi) 0%,var(--stage) 62%)}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;cursor:grab}
 .stage canvas:active{cursor:grabbing}
-.hint{position:absolute;top:12px;left:14px;font-size:12px;color:rgba(255,255,255,.72);pointer-events:none}
+.hint{position:absolute;top:12px;left:14px;font-size:12px;color:var(--muted);pointer-events:none}
 .tools{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.seg{display:inline-flex;border:1px solid rgba(255,255,255,.3);border-radius:10px;overflow:hidden}
-.chip{background:rgba(255,255,255,.08);color:#fff;border:0;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.chip{background:var(--bg);color:var(--ink);border:0;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--amber);color:var(--on-amber)}
-.tools>.chip{border:1px solid rgba(255,255,255,.3);border-radius:10px}
-.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(11,47,58,.9);color:#fff;padding:20px}
+.tools>.chip{border:1px solid var(--line);border-radius:10px}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--overlay);color:var(--ink);padding:20px}
 .overlay ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
-.overlay li{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.55)}
-.overlay li i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);flex:none}
-.overlay li.act{color:#fff}
+.overlay li{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.overlay li i{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);flex:none}
+.overlay li.act{color:var(--ink)}
 .overlay li.act i{border-color:var(--amber);border-top-color:transparent;animation:spin .8s linear infinite}
-.overlay li.done{color:#fff}
+.overlay li.done{color:var(--ink)}
 .overlay li.done i{background:var(--amber);border-color:var(--amber)}
-.nogl{position:absolute;inset:0;display:grid;place-items:center;color:#fff;text-align:center;padding:24px}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink);text-align:center;padding:24px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* Anuncio */
@@ -338,7 +329,9 @@ function prepare(src){
 
 /* ---------- escena 3D ---------- */
 var stage=$('#stage'), glc=$('#gl'), renderer=null, scene, camera, root, holder=null, shadow, solidGroup, wireGroup;
-var drag=null, auto=!reduceMotion, mode='solid';
+var drag=null, auto=!reduceMotion, mode='solid', wireMat=null;
+function wireColor(){var v=getComputedStyle(document.documentElement).getPropertyValue('--wire').trim()||'#0B2F3A';return new THREE.Color(v);}
+function syncWire(){if(wireMat)wireMat.color.set(wireColor());}
 function initGL(){
   try{
     renderer=new THREE.WebGLRenderer({canvas:glc,antialias:true,alpha:true});
@@ -408,7 +401,7 @@ function buildModel(src){
   solidGroup=new THREE.Group();
   solidGroup.add(new THREE.Mesh(disp(P,G,1),front));
   solidGroup.add(new THREE.Mesh(disp(P,G,-1),back));
-  var wm=new THREE.MeshBasicMaterial({color:0xFFB000,wireframe:true,alphaMap:alpha,alphaTest:0.5});
+  var wm=new THREE.MeshBasicMaterial({color:wireColor(),wireframe:true,alphaMap:alpha,alphaTest:0.5});wireMat=wm;
   wireGroup=new THREE.Group();
   wireGroup.add(new THREE.Mesh(disp(P,WG,1),wm));
   wireGroup.add(new THREE.Mesh(disp(P,WG,-1),wm));
@@ -543,6 +536,9 @@ $('#regen').addEventListener('click',function(){headIdx=(headIdx+1)%HEADS.length
 function setBg(v){state.bg=v;$('#bgAmber').setAttribute('aria-pressed',String(v==='amber'));$('#bgInk').setAttribute('aria-pressed',String(v==='ink'));}
 $('#bgAmber').addEventListener('click',function(){setBg('amber');});
 $('#bgInk').addEventListener('click',function(){setBg('ink');});
+
+if(window.matchMedia){var mqd=matchMedia('(prefers-color-scheme: dark)');if(mqd.addEventListener)mqd.addEventListener('change',syncWire);else if(mqd.addListener)mqd.addListener(syncWire);}
+if(window.MutationObserver)new MutationObserver(syncWire).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
 /* ---------- bucle ---------- */
 var ok=initGL();
